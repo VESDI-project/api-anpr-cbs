@@ -28,6 +28,9 @@ info:
     name: VESDI Ingestion Team #placeholder
     url: https://www.cbs.nl/nl-nl/dossier/vesdi
     email: vesdi@cbs.nl
+  license:
+    name: CBS Pilot Usage Only #placeholder
+    url: https://www.cbs.nl/
 
 servers:
   - url: https://ingest.cbs.nl/anpr/v1 #placeholder
@@ -37,10 +40,15 @@ servers:
 
 tags:
   - name: Meta
+    description: API metadata endpoints (health, public keys).
   - name: Schemas
+    description: Schema discovery endpoints for payload definitions.
   - name: Cameras
+    description: Camera registration and metadata management endpoints.
   - name: Observations
+    description: ANPR observation ingestion endpoints.
   - name: Jobs
+    description: Asynchronous ingest job tracking endpoints.
 
 paths:
   /status:
@@ -48,6 +56,7 @@ paths:
       tags: [Meta]
       summary: Health check
       operationId: getStatus
+      security: []
       responses:
         '200':
           description: OK
@@ -57,11 +66,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Status'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '503': { $ref: '#/components/responses/ServerError' }
   /jwks:
     get:
       tags: [Meta]
       summary: CBS public keys (JWKS) for verifying JWT/JWE
       operationId: getJwks
+      security: []
       responses:
         '200':
           description: JWKS
@@ -75,6 +87,8 @@ paths:
                     items:
                       type: object
                       description: JSON Web Key (see RFC 7517)
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '503': { $ref: '#/components/responses/ServerError' }
   /schemas:
     get:
       tags: [Schemas]
@@ -98,6 +112,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/SchemaDescriptor'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /cameras:
     post:
@@ -131,7 +147,18 @@ paths:
                 value:
                   - camera_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
                     supplier_camera_ref: SUP-0123
-                    location: { lat: 52.0907, lon: 5.1214, crs: EPSG:4326 }
+                    location:
+                      lat: 52.0907
+                      lon: 5.1214
+                      crs: EPSG:4326
+                      crs_additional: EPSG:28992
+                      address:
+                        formatted: Catharijnesingel 30, 3511 BK Utrecht, NL
+                        street: Catharijnesingel
+                        house_number: '30'
+                        postal_code: 3511 BK
+                        city: Utrecht
+                        country: NL
                     mount_height_m: 6.5
                     azimuth_deg: 145
                     tilt_deg: 12
@@ -142,6 +169,8 @@ paths:
                     active_from: '2025-08-01T00:00:00Z'
                     privacy_masks_geojson: null
                     attributes: { lane_count: 2, one_way: true }
+                    camera_type: monitoring
+                    deployment_type: fixed
       responses:
         '201':
           description: Created
@@ -506,17 +535,36 @@ components:
 
     Camera:
       type: object
-      required: [camera_id, location]
+      required: [camera_id, location, camera_type]
       properties:
         camera_id: { type: string, format: uuid }
         supplier_camera_ref: { type: string, nullable: true }
         location:
           type: object
-          required: [lat, lon]
+          required: [lat, lon, address]
           properties:
             lat: { type: number, minimum: -90, maximum: 90 }
             lon: { type: number, minimum: -180, maximum: 180 }
-            crs: { type: string, default: EPSG:4326, description: 'Coordinate reference system (EPSG:4326 or EPSG:28992)' }
+            crs:
+              type: string
+              enum: [EPSG:4326]
+              description: Primary coordinate reference system (WGS-84 latitude/longitude).
+            crs_additional:
+              type: string
+              enum: [EPSG:28992]
+              nullable: true
+              description: Optional RD New coordinate reference system identifier when dual-coordinates are supplied.
+            address:
+              type: object
+              description: Geocoded address closest to the camera location.
+              required: [formatted]
+              properties:
+                formatted: { type: string, description: Human-readable address line }
+                street: { type: string, nullable: true }
+                house_number: { type: string, nullable: true }
+                postal_code: { type: string, nullable: true }
+                city: { type: string, nullable: true }
+                country: { type: string, nullable: true, description: ISO 3166-1 alpha-2 country code }
         mount_height_m: { type: number, minimum: 0, nullable: true }
         azimuth_deg: { type: number, minimum: 0, maximum: 360, nullable: true }
         tilt_deg: { type: number, minimum: -90, maximum: 90, nullable: true }
@@ -535,6 +583,15 @@ components:
           type: object
           additionalProperties: true
           description: Vendor-specific attributes (e.g., lane_count, one_way).
+        camera_type:
+          type: string
+          enum: [monitoring, enforcement, hybrid]
+          description: Primary purpose of the camera installation.
+        deployment_type:
+          type: string
+          enum: [fixed, mobile_scanauto, portable, temporary]
+          nullable: true
+          description: Physical deployment mode of the camera (e.g., fixed pole, scan-auto, portable unit).
 
     Plate:
       type: object
