@@ -150,7 +150,6 @@ paths:
                     location:
                       lat: 52.0907
                       lon: 5.1214
-                      crs: EPSG:4326
                       crs_additional: EPSG:28992
                       address:
                         formatted: Catharijnesingel 30, 3511 BK Utrecht, NL
@@ -545,15 +544,11 @@ components:
           properties:
             lat: { type: number, minimum: -90, maximum: 90 }
             lon: { type: number, minimum: -180, maximum: 180 }
-            crs:
-              type: string
-              enum: [EPSG:4326]
-              description: Primary coordinate reference system (WGS-84 latitude/longitude).
             crs_additional:
               type: string
               enum: [EPSG:28992]
               nullable: true
-              description: Optional RD New coordinate reference system identifier when dual-coordinates are supplied.
+              description: Optional RD New coordinate reference system identifier when dual-coordinates are supplied; WGS-84 lat/lon are mandatory.
             address:
               type: object
               description: Geocoded address closest to the camera location.
