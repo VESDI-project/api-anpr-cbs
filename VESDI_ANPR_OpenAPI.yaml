@@ -170,6 +170,7 @@ paths:
                     attributes: { lane_count: 2, one_way: true }
                     camera_type: monitoring
                     deployment_type: fixed
+                    traffic_direction: bidirectional
       responses:
         '201':
           description: Created
@@ -587,6 +588,11 @@ components:
           enum: [fixed, mobile_scanauto, portable, temporary]
           nullable: true
           description: Physical deployment mode of the camera (e.g., fixed pole, scan-auto, portable unit).
+        traffic_direction:
+          type: string
+          enum: [bidirectional, incoming_only, outgoing_only]
+          nullable: true
+          description: Traffic flow coverage served by this camera.
 
     Plate:
       type: object
@@ -610,12 +616,12 @@ components:
 
     AnprObservation:
       type: object
-      required: [observation_id, camera_id, event_time, plate]
+      required: [observation_id, camera_id, event_time, device_time, plate]
       properties:
         observation_id: { type: string, format: uuid }
         camera_id: { type: string, format: uuid }
         event_time: { type: string, format: date-time, description: UTC ISO 8601 (RFC3339) with milliseconds }
-        device_time: { type: string, format: date-time, nullable: true }
+        device_time: { type: string, format: date-time, description: Local device capture timestamp }
         plate: { $ref: '#/components/schemas/Plate' }
         vehicle: { $ref: '#/components/schemas/VehicleHint' }
         read_quality: { $ref: '#/components/schemas/ReadQuality' }
