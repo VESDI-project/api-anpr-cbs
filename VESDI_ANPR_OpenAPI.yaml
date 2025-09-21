@@ -42,10 +42,6 @@ tags:
   - name: Observations
   - name: Jobs
 
-security:
-  - mtls: []
-    oauth2: [anpr.write]
-
 paths:
   /status:
     get:
@@ -84,6 +80,12 @@ paths:
       tags: [Schemas]
       summary: List available data schemas
       operationId: listSchemas
+      security:
+        - mtls: []
+          ishareToken: []
+          ishareDelegation: []
+        - mtls: []
+          oauth2: [schemas.read]
       responses:
         '200':
           description: Available schema descriptors
@@ -106,6 +108,9 @@ paths:
         already exists, use PUT /cameras/{camera_id} to update.
       operationId: registerCameras
       security:
+        - mtls: []
+          ishareToken: []
+          ishareDelegation: []
         - mtls: []
           oauth2: [camera.write]
       parameters:
@@ -171,6 +176,9 @@ paths:
       operationId: updateCamera
       security:
         - mtls: []
+          ishareToken: []
+          ishareDelegation: []
+        - mtls: []
           oauth2: [camera.write]
       parameters:
         - $ref: '#/components/parameters/XSupplierId'
@@ -204,6 +212,9 @@ paths:
       operationId: getCamera
       security:
         - mtls: []
+          ishareToken: []
+          ishareDelegation: []
+        - mtls: []
           oauth2: [camera.read]
       responses:
         '200':
@@ -224,6 +235,12 @@ paths:
       summary: Post a single ANPR observation (low volume/test)
       description: For production, prefer the bulk endpoint `/anpr-reads:batch`.
       operationId: postAnprRead
+      security:
+        - mtls: []
+          ishareToken: []
+          ishareDelegation: []
+        - mtls: []
+          oauth2: [anpr.write]
       parameters:
         - $ref: '#/components/parameters/XSupplierId'
         - $ref: '#/components/parameters/XSchemaVersion'
@@ -276,6 +293,12 @@ paths:
       tags: [Observations]
       summary: Bulk ingest ANPR observations
       operationId: postAnprReadsBatch
+      security:
+        - mtls: []
+          ishareToken: []
+          ishareDelegation: []
+        - mtls: []
+          oauth2: [anpr.write]
       parameters:
         - $ref: '#/components/parameters/XSupplierId'
         - $ref: '#/components/parameters/XSchemaVersion'
@@ -331,6 +354,12 @@ paths:
       operationId: getIngestJob
       parameters:
         - $ref: '#/components/parameters/XSupplierId'
+      security:
+        - mtls: []
+          ishareToken: []
+          ishareDelegation: []
+        - mtls: []
+          oauth2: [jobs.read]
       responses:
         '200':
           description: Job status
@@ -349,6 +378,16 @@ components:
     mtls:
       type: mutualTLS
       description: Mutual TLS using supplier client certificates. Enforced at the edge.
+    ishareToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: iShare access token obtained via the federation Identity Provider.
+    ishareDelegation:
+      type: apiKey
+      in: header
+      name: Delegation-Evidence
+      description: iShare delegation evidence JWT issued by the municipality delegator.
     oauth2:
       type: oauth2
       description: OAuth 2.1 Client Credentials using private_key_jwt; tokens are mTLS-bound.
