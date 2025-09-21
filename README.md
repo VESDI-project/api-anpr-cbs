@@ -5,7 +5,7 @@ Onder issues worden discussiepunten geopend
 
 ## ANPR Analysis Dashboard
 Bekijk de interactieve ANPR Analysis Dashboard direct in je browser:
-[**Open ANPR Analysis Dashboard**](https://htmlpreview.github.io/?https://raw.githubusercontent.com/VESDI-project/api-anpr-cbs/refs/heads/main/anpr_analysis_dashboard.html)
+[**Open ANPR Analysis Dashboard**](https://raw.githack.com/VESDI-project/api-anpr-cbs/main/anpr_analysis_dashboard.html)
 
 ## ReDocly
 Om de YAML-API file iets makkelijker te bekijken, upload 'em in de ReDocly interactive viewer, of klik hieronder:

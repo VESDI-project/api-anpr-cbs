@@ -243,7 +243,7 @@ paths:
                   device_time: '2025-09-03T07:12:15.100Z'
                   plate:
                     country: NL
-                    raw: NLG123AB
+                    plate: NLG123AB
                   read_quality:
                     confidence: 0.96
                   lane: 1
@@ -292,8 +292,8 @@ paths:
               ndjson:
                 summary: Two observations
                 value: |
-                  {"observation_id":"...","camera_id":"...","event_time":"2025-09-03T07:12:15.123Z","plate":{"country":"NL","raw":"NLG123AB"},"read_quality":{"confidence":0.96}}
-                  {"observation_id":"...","camera_id":"...","event_time":"2025-09-03T07:12:16.301Z","plate":{"country":"NL","raw":"NLK456CD"},"read_quality":{"confidence":0.91}}
+                  {"observation_id":"...","camera_id":"...","event_time":"2025-09-03T07:12:15.123Z","plate":{"country":"NL","plate":"NLG123AB"},"read_quality":{"confidence":0.96}}
+                  {"observation_id":"...","camera_id":"...","event_time":"2025-09-03T07:12:16.301Z","plate":{"country":"NL","plate":"NLK456CD"},"read_quality":{"confidence":0.91}}
           application/json:
             schema:
               type: array
@@ -499,10 +499,10 @@ components:
 
     Plate:
       type: object
-      required: [country, raw]
+      required: [country, plate]
       properties:
         country: { type: string, description: ISO 3166-1 alpha-2 country code }
-        raw: { type: string, description: Raw license plate as captured by supplier }
+        plate: { type: string, description: License plate string as captured by supplier }
 
     ReadQuality:
       type: object
@@ -592,7 +592,7 @@ components:
 x-cbs-policies:
   privacy:
     - Raw license plates are ephemeral and removed within 24 hours unless a legal basis for QC retention exists.
-    - CBS computes plate_hash_vesdi = SHA-256(raw_plate + HSM-held global pepper) outside of this ingestion API.
+    - CBS computes plate_hash_vesdi = SHA-256(plate_value + HSM-held global pepper) outside of this ingestion API.
   security:
     - TLS 1.3 with mutual TLS is mandatory. HSTS enabled.
     - OAuth 2.1 client credentials flow using private_key_jwt. Tokens are bound to the mTLS session.
