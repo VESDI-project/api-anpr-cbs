@@ -13,7 +13,7 @@ Om de YAML-API file iets makkelijker te bekijken, upload 'em in de ReDocly inter
 
 ## Project achtergrond
 Meer achtergrond over het project weten? Scan deze presentatie en fris je geheugen op over het projectplan:
-[**VESDI ANPR Deep Dive Presentatie**](https://dmi-ecosysteem.nl/wp-content/uploads/bb_documents/2025/01/20250130-VESDI-ANPR-deep-dive.pdf)
+[**VESDI ANPR Deep Dive Presentatie**](https://dmi-ecosysteem.nl/wp-content/uploads/bb_documents/2025/01/20250130-VESDI-ANPR-deep-dive.pdf) [**Projectplan**](https://dmi-ecosysteem.nl/groepen/slimme-logistiek/documents/folders/1558/)
 
 ## PDX
 Als je bij de volgende bijeenkomst op 9 oktober ook bij de PDX-lancering wilt zijn, bekijk dan hier het programma en schrijf je in:
