@@ -616,12 +616,12 @@ components:
 
     AnprObservation:
       type: object
-      required: [observation_id, camera_id, event_time, device_time, plate]
+      required: [observation_id, camera_id, event_time, plate]
       properties:
         observation_id: { type: string, format: uuid }
         camera_id: { type: string, format: uuid }
         event_time: { type: string, format: date-time, description: UTC ISO 8601 (RFC3339) with milliseconds }
-        device_time: { type: string, format: date-time, description: Local device capture timestamp }
+        device_time: { type: string, format: date-time, nullable: true, description: Local device capture timestamp when available }
         plate: { $ref: '#/components/schemas/Plate' }
         vehicle: { $ref: '#/components/schemas/VehicleHint' }
         read_quality: { $ref: '#/components/schemas/ReadQuality' }
