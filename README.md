@@ -1,7 +1,7 @@
 # ReadMe
 
 ## Issues
-Onder issues worden discussiepunten geopend
+Onder issues worden discussiepunten geopend - er staan er al 2 (over het datamodel en over authenticatie/ security)
 
 ## ANPR Analysis Dashboard
 Bekijk de interactieve ANPR Analysis Dashboard direct in je browser:
@@ -18,3 +18,6 @@ Meer achtergrond over het project weten? Scan deze presentatie en fris je geheug
 ## PDX
 Als je bij de volgende bijeenkomst op 9 oktober ook bij de PDX-lancering wilt zijn, bekijk dan hier het programma en schrijf je in:
 [**Vertrouwd datadelen in de praktijk: de PDX – DMI-ecosysteem**](https://dmi-ecosysteem.nl/events/de-toekomst-van-vertrouwd-datadelen-de-pdx/)
+
+## Disclaimer
+Hier geplaatste informatie is zo goed mogelijk opgesteld, naar beste eer en geweten, aan verandering onderhevig en kunnen geen rechten aan ontleend worden. 
