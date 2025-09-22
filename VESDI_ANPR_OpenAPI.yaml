@@ -610,9 +610,7 @@ components:
     VehicleHint:
       type: object
       properties:
-        axles: { type: integer, minimum: 1, nullable: true }
-        class_hint: { type: string, nullable: true, description: UNECE classes such as N1/N2/N3/M1 }
-        direction_deg: { type: number, minimum: 0, maximum: 360, nullable: true }
+        european_category: { type: string, nullable: true, description: European vehicle category (M1, M2, M3, N1, N2, N3, O1, O2, O3, O4, L1e-L7e, OTH for other Dutch types, FOR for foreign unknown) }
 
     AnprObservation:
       type: object
@@ -626,7 +624,6 @@ components:
         vehicle: { $ref: '#/components/schemas/VehicleHint' }
         read_quality: { $ref: '#/components/schemas/ReadQuality' }
         lane: { type: integer, minimum: 0, nullable: true }
-        trigger: { type: string, nullable: true, enum: [motion, loop, radar, other] }
         notes: { type: string, nullable: true }
         extensions:
           type: object
