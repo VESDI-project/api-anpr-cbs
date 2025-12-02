@@ -269,7 +269,6 @@ paths:
                   observation_id: f9b90f2c-7e1c-4dc4-bb06-9e8a0d1c7f31
                   camera_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
                   event_time: '2025-09-03T07:12:15.123Z'
-                  device_time: '2025-09-03T07:12:15.100Z'
                   plate:
                     country: NL
                     plate: NLG123AB
@@ -287,6 +286,7 @@ paths:
                 properties:
                   accepted: { type: boolean }
                   observation_id: { type: string, format: uuid }
+                  ingested_at: { type: string, format: date-time, description: Server-side timestamp when CBS received the observation }
                   errors:
                     type: array
                     items: { $ref: '#/components/schemas/ErrorItem' }
@@ -586,7 +586,6 @@ components:
         observation_id: { type: string, format: uuid }
         camera_id: { type: string, format: uuid }
         event_time: { type: string, format: date-time, description: UTC ISO 8601 (RFC3339) with milliseconds }
-        device_time: { type: string, format: date-time, nullable: true, description: Local device capture timestamp when available }
         plate: { $ref: '#/components/schemas/Plate' }
         vehicle: { $ref: '#/components/schemas/VehicleHint' }
         read_quality: { $ref: '#/components/schemas/ReadQuality' }
@@ -602,6 +601,7 @@ components:
       properties:
         job_id: { type: string }
         status: { type: string, enum: [queued, validating, accepted, partial, failed] }
+        ingested_at: { type: string, format: date-time, description: Server-side timestamp when CBS received the batch }
 
     BulkResult:
       type: object
@@ -609,6 +609,7 @@ components:
         received: { type: integer }
         accepted: { type: integer }
         rejected: { type: integer }
+        ingested_at: { type: string, format: date-time, description: Server-side timestamp when CBS received the batch }
         errors:
           type: array
           items: { $ref: '#/components/schemas/ErrorItem' }
