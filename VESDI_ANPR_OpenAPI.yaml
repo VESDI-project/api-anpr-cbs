@@ -162,7 +162,7 @@ paths:
                     attributes: { lane_count: 2, one_way: true }
                     camera_type: monitoring
                     deployment_type: fixed
-                    traffic_direction: bidirectional
+                    detection_capability: bidirectional
       responses:
         '201':
           description: Created
@@ -555,11 +555,33 @@ components:
           enum: [fixed, mobile_scanauto, portable, temporary]
           nullable: true
           description: Physical deployment mode of the camera (e.g., fixed pole, scan-auto, portable unit).
-        traffic_direction:
+        detection_capability:
           type: string
-          enum: [bidirectional, incoming_only, outgoing_only]
+          enum: [obverse, reverse, bidirectional]
           nullable: true
-          description: Traffic flow coverage served by this camera.
+          description: |
+            Detection capability of the camera regarding license plate capture:
+            - obverse: captures approaching traffic (front license plate / voorzijde)
+            - reverse: captures departing traffic (rear license plate / achterzijde)
+            - bidirectional: can capture both directions
+        camera_status:
+          type: string
+          enum: [active, inactive]
+          nullable: true
+          description: |
+            Operational status of the camera. May be null if supplier
+            does not provide this information or updates are not available.
+        camera_status_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when camera_status was last updated by the supplier.
+        zone_id:
+          type: string
+          nullable: true
+          description: |
+            Identifier of the emission zone (ZE-zone) this camera is associated with,
+            if known by the supplier. Format determined by zone registry.
 
     Plate:
       type: object
@@ -589,7 +611,31 @@ components:
         plate: { $ref: '#/components/schemas/Plate' }
         vehicle: { $ref: '#/components/schemas/VehicleHint' }
         read_quality: { $ref: '#/components/schemas/ReadQuality' }
-        lane: { type: integer, minimum: 0, nullable: true }
+        detection_direction:
+          type: string
+          enum: [obverse, reverse]
+          nullable: true
+          description: |
+            Direction of the license plate detection as reported by the supplier:
+            - obverse: vehicle approaching camera (front plate detected / voorzijde)
+            - reverse: vehicle departing from camera (rear plate detected / achterzijde)
+        lane:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: |
+            Lane number where the vehicle was detected. Lanes are numbered
+            according to standard traffic engineering convention:
+            - Numbering starts at 1 (not 0)
+            - In right-hand traffic countries (e.g., Netherlands): lane 1 is
+              the rightmost lane (from driver's perspective in direction of travel)
+            - Lane numbers increase towards the left (towards median/center)
+            - For bidirectional roads, each direction has its own lane numbering
+              starting from the right edge of each carriageway
+
+            Example for a 3-lane carriageway in NL:
+              | Lane 3 | Lane 2 | Lane 1 | Road edge
+              | fast   | middle | slow   | →
         notes: { type: string, nullable: true }
         extensions:
           type: object

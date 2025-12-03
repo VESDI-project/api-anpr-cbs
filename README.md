@@ -9,7 +9,7 @@ Bekijk de interactieve ANPR Analysis Dashboard direct in je browser:
 
 ## ReDocly
 Om de YAML-API file iets makkelijker te bekijken, upload 'em in de ReDocly interactive viewer, of klik hieronder:
-[**Bekijk API Documentatie in ReDocly**](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VESDI-project/api-anpr-cbs/refs/heads/main/VESDI_ANPR_OpenAPI.yaml)
+[**Bekijk API Documentatie in ReDocly**](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VESDI-project/api-anpr-cbs/main/VESDI_ANPR_OpenAPI.yaml)
 
 ## Project achtergrond
 Meer achtergrond over het project weten? Scan deze presentatie en fris je geheugen op over het projectplan:
