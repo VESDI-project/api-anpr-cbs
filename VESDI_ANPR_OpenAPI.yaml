@@ -162,7 +162,7 @@ paths:
                     attributes: { lane_count: 2, one_way: true }
                     camera_type: monitoring
                     deployment_type: fixed
-                    detection_capability: bidirectional
+                    traffic_direction: bidirectional
       responses:
         '201':
           description: Created
@@ -555,12 +555,12 @@ components:
           enum: [fixed, mobile_scanauto, portable, temporary]
           nullable: true
           description: Physical deployment mode of the camera (e.g., fixed pole, scan-auto, portable unit).
-        detection_capability:
+        traffic_direction:
           type: string
           enum: [obverse, reverse, bidirectional]
           nullable: true
           description: |
-            Detection capability of the camera regarding license plate capture:
+            Traffic direction capability of the camera regarding license plate capture:
             - obverse: captures approaching traffic (front license plate / voorzijde)
             - reverse: captures departing traffic (rear license plate / achterzijde)
             - bidirectional: can capture both directions
