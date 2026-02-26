@@ -37,17 +37,10 @@ info:
     url: https://www.cbs.nl/
 
 servers:
-  - url: https://datasec-api.cbs.nl/{afnemer}
+  - url: https://api.example.com/placeholder
     description: |
-      CBS DataSec API Gateway. The actual endpoint URL (including the
-      afnemer path segment) will be provided by CBS during onboarding.
-      Do not use this placeholder URL directly.
-    variables:
-      afnemer:
-        default: PLACEHOLDER
-        description: |
-          Afnemer-specific path segment, provided by CBS during onboarding.
-          Replace with the value received from CBS.
+      Placeholder URL. The actual CBS DataSec API Gateway endpoint URL
+      will be provided by CBS during onboarding. Do not use this URL directly.
 
 tags:
   - name: Ingestion
