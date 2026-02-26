@@ -38,11 +38,16 @@ info:
 
 servers:
   - url: https://datasec-api.cbs.nl/{afnemer}
-    description: CBS DataSec API Gateway (production)
+    description: |
+      CBS DataSec API Gateway. The actual endpoint URL (including the
+      afnemer path segment) will be provided by CBS during onboarding.
+      Do not use this placeholder URL directly.
     variables:
       afnemer:
-        default: vesdi-anpr
-        description: Afnemer-specific path segment, assigned by CBS during onboarding.
+        default: PLACEHOLDER
+        description: |
+          Afnemer-specific path segment, provided by CBS during onboarding.
+          Replace with the value received from CBS.
 
 tags:
   - name: Ingestion
@@ -197,7 +202,7 @@ paths:
                 $ref: '#/components/schemas/GatewayReceipt'
               example:
                 status: accepted
-                company: vesdi-anpr
+                company: '<afnemer>'
                 requestId: 8f14e45f-ceea-467f-a82d-0e5a4b8e9c12
                 idempotencyKey: 3fa85f64-5717-4562-b3fc-2c963f66afa6
                 timestamp: '2026-02-13T20:34:09.192Z'
@@ -369,16 +374,26 @@ components:
           enum: [obverse, reverse]
           nullable: true
           description: |
-            Direction of the license plate detection:
-            - obverse: vehicle approaching camera (front plate / voorzijde)
-            - reverse: vehicle departing from camera (rear plate / achterzijde)
+            Direction of the license plate detection as reported by the supplier:
+            - obverse: vehicle approaching camera (front plate detected / voorzijde)
+            - reverse: vehicle departing from camera (rear plate detected / achterzijde)
         lane:
           type: integer
           minimum: 1
           nullable: true
           description: |
-            Lane number where the vehicle was detected. Lane 1 is the
-            rightmost lane (NL convention), numbering increases to the left.
+            Lane number where the vehicle was detected. Lanes are numbered
+            according to standard traffic engineering convention:
+            - Numbering starts at 1 (not 0)
+            - In right-hand traffic countries (e.g., Netherlands): lane 1 is
+              the rightmost lane (from driver's perspective in direction of travel)
+            - Lane numbers increase towards the left (towards median/center)
+            - For bidirectional roads, each direction has its own lane numbering
+              starting from the right edge of each carriageway
+
+            Example for a 3-lane carriageway in NL:
+              | Lane 3 | Lane 2 | Lane 1 | Road edge
+              | fast   | middle | slow   | -->
         notes:
           type: string
           nullable: true
@@ -416,7 +431,7 @@ components:
           type: string
           enum: ['EPSG:28992']
           nullable: true
-          description: Optional RD New CRS identifier when dual-coordinates are supplied.
+          description: Optional RD New coordinate reference system identifier when dual-coordinates are supplied; WGS-84 lat/lon are mandatory.
         address_formatted:
           type: string
           description: Human-readable address line.
@@ -484,28 +499,34 @@ components:
           type: string
           enum: [fixed, mobile_scanauto, portable, temporary]
           nullable: true
-          description: Physical deployment mode of the camera.
+          description: Physical deployment mode of the camera (e.g., fixed pole, scan-auto, portable unit).
         traffic_direction:
           type: string
           enum: [obverse, reverse, bidirectional]
           nullable: true
           description: |
-            Traffic direction capability:
-            - obverse: captures approaching traffic (front plate / voorzijde)
-            - reverse: captures departing traffic (rear plate / achterzijde)
+            Traffic direction capability of the camera regarding license plate capture:
+            - obverse: captures approaching traffic (front license plate / voorzijde)
+            - reverse: captures departing traffic (rear license plate / achterzijde)
             - bidirectional: can capture both directions
         camera_status:
           type: string
           enum: [active, inactive]
           nullable: true
+          description: |
+            Operational status of the camera. May be null if supplier
+            does not provide this information or updates are not available.
         camera_status_updated_at:
           type: string
           format: date-time
           nullable: true
+          description: Timestamp when camera_status was last updated by the supplier.
         zone_id:
           type: string
           nullable: true
-          description: Identifier of the emission zone (ZE-zone) this camera is associated with.
+          description: |
+            Identifier of the emission zone (ZE-zone) this camera is associated with,
+            if known by the supplier. Format determined by zone registry.
 
     GatewayReceipt:
       type: object
@@ -519,7 +540,7 @@ components:
         company:
           type: string
           description: Afnemer identifier.
-          example: vesdi-anpr
+          example: '<afnemer>'
         requestId:
           type: string
           description: Gateway-assigned request identifier.
@@ -547,6 +568,12 @@ components:
               type: string
             message:
               type: string
+            hint:
+              type: string
+              nullable: true
+            trace_id:
+              type: string
+              nullable: true
 
 x-cbs-policies:
   privacy:
