@@ -1,0 +1,6 @@
+# OS files
+.DS_Store
+
+# Reports (local only - md/docx/pdf)
+reports/
+CBS_DataSec_API_Gateway_Aansluitdocument.pdf

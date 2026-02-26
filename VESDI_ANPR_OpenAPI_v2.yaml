@@ -1,0 +1,515 @@
+openapi: 3.0.3
+info:
+  title: VESDI ANPR Ingestion API
+  version: 2.0.0
+  description: |
+    Secure ingestion API for Automatic Number Plate Recognition (ANPR) observations
+    and camera metadata from suppliers to the VESDI platform of CBS, via the CBS
+    DataSec API Gateway.
+
+    **v2 changes**: This version aligns the specification with the CBS DataSec API
+    Gateway Aansluitdocument. Key differences from v1:
+    - Single POST endpoint per afnemer (no separate /cameras, /anpr-reads, etc.)
+    - API key authentication (no mTLS/OAuth2)
+    - JSON envelope with `message_type`, `schema_version`, and `payload`
+    - Flattened data schemas (no nested Plate, ReadQuality, Location objects)
+    - 202 Accepted response with CBS gateway receipt format
+
+    **Privacy-by-design**: transport security with TLS 1.2+,
+    data minimization (limited data items), strict retention,
+    auditability.
+
+    **Timing and reliability**:
+    - Target latency: 95% within 5 minutes, 99% within 10 minutes.
+    - Lateness window: accept events up to 7 days old (beyond this requires agreed backfill job).
+    - Future events: reject if event_time is more than 5 minutes in the future (allowable clock skew).
+    - Idempotency window: 7 days.
+
+    **Rate limits**: 600 messages per minute, max 50 MB per upload.
+
+  termsOfService: https://www.cbs.nl/
+  contact:
+    name: VESDI Ingestion Team
+    url: https://www.cbs.nl/nl-nl/dossier/vesdi
+    email: vesdi@cbs.nl
+  license:
+    name: CBS Pilot Usage Only
+    url: https://www.cbs.nl/
+
+servers:
+  - url: https://datasec-api.cbs.nl/{afnemer}
+    description: CBS DataSec API Gateway (production)
+    variables:
+      afnemer:
+        default: vesdi-anpr
+        description: Afnemer-specific path segment, assigned by CBS during onboarding.
+
+tags:
+  - name: Ingestion
+    description: Single ingestion endpoint for all ANPR message types.
+
+security:
+  - apiKey: []
+
+paths:
+  /:
+    post:
+      tags: [Ingestion]
+      summary: Ingest ANPR data
+      operationId: postMessage
+      description: |
+        Single ingestion endpoint for all VESDI ANPR message types. The CBS
+        DataSec API Gateway provides one POST endpoint per afnemer. Message
+        types are distinguished via the `message_type` field in the JSON
+        envelope body.
+
+        Supported message types:
+        - `anpr_observation_batch` - Batch of ANPR observations
+        - `camera_registration` - Register one or more new cameras
+        - `camera_update` - Update metadata for existing cameras
+
+        The gateway confirms receipt with `202 Accepted`. Content validation
+        happens asynchronously downstream.
+
+        **HTTP client notes** (per CBS Aansluitdocument):
+        - Use HTTP/1.1 (not HTTP/2)
+        - Send an empty `Expect:` header to suppress 100-continue behavior
+      parameters:
+        - name: X-Filename
+          in: header
+          required: false
+          schema:
+            type: string
+            example: anpr_observations_2026-02-25.json
+          description: |
+            Recommended. Descriptive filename for logging and traceability at
+            CBS side. Example: `anpr_observations_2026-02-25.json`.
+        - name: X-Request-Id
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+            example: 8f14e45f-ceea-467f-a82d-0e5a4b8e9c12
+          description: |
+            Recommended. Unique request identifier for end-to-end tracing.
+        - name: X-Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+            example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          description: |
+            Recommended. Unique key to deduplicate requests within a 7-day
+            window. Replaces the v1 `Idempotency-Key` header.
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              $ref: '#/components/schemas/MessageEnvelope'
+            examples:
+              anpr_observation_batch:
+                summary: Batch of ANPR observations
+                value:
+                  message_type: anpr_observation_batch
+                  schema_version: anpr-2.0.0
+                  payload:
+                    - observation_id: f9b90f2c-7e1c-4dc4-bb06-9e8a0d1c7f31
+                      camera_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                      event_time: '2025-09-03T07:12:15.123Z'
+                      plate_country: NL
+                      plate_text: NLG123AB
+                      read_confidence: 0.96
+                      lane: 1
+                    - observation_id: c3d4e5f6-a1b2-4dc4-bb06-1234567890ab
+                      camera_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                      event_time: '2025-09-03T07:12:16.301Z'
+                      plate_country: NL
+                      plate_text: NLK456CD
+                      read_confidence: 0.91
+                      lane: 2
+              camera_registration:
+                summary: Register cameras
+                value:
+                  message_type: camera_registration
+                  schema_version: anpr-2.0.0
+                  payload:
+                    - camera_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                      supplier_camera_ref: SUP-0123
+                      location_lat: 52.0907
+                      location_lon: 5.1214
+                      location_crs_additional: 'EPSG:28992'
+                      address_formatted: 'Catharijnesingel 30, 3511 BK Utrecht, NL'
+                      address_street: Catharijnesingel
+                      address_house_number: '30'
+                      address_postal_code: 3511 BK
+                      address_city: Utrecht
+                      address_country: NL
+                      mount_height_m: 6.5
+                      azimuth_deg: 145
+                      tilt_deg: 12
+                      fov_deg: 35
+                      camera_type: monitoring
+                      deployment_type: fixed
+                      traffic_direction: bidirectional
+                      camera_status: active
+                      camera_status_updated_at: '2025-08-01T00:00:00Z'
+                      zone_id: null
+                      view_polygon_geojson:
+                        type: Polygon
+                        coordinates: [[[5.1210, 52.0905], [5.1218, 52.0905], [5.1218, 52.0910], [5.1210, 52.0910], [5.1210, 52.0905]]]
+                      privacy_masks_geojson: null
+                      attributes: { lane_count: 2, one_way: true }
+                      active_from: '2025-08-01T00:00:00Z'
+                      active_to: null
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageEnvelope'
+      responses:
+        '202':
+          description: |
+            Accepted. The gateway confirms receipt of the message. This is a
+            transport-level acknowledgement only; content validation happens
+            asynchronously downstream.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayReceipt'
+              example:
+                status: accepted
+                company: vesdi-anpr
+                requestId: 8f14e45f-ceea-467f-a82d-0e5a4b8e9c12
+                idempotencyKey: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                timestamp: '2026-02-13T20:34:09.192Z'
+                sizeBytes: 4918104
+                filename: anpr_observations_2026-02-25.json
+        '401':
+          description: Unauthorized - invalid or missing API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - API key valid but not authorized for this endpoint, or IP not on allowlist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Payload too large (max 50 MB per upload).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests (max 600 per minute).
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Bad gateway.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: X-API-Key
+      in: header
+      description: |
+        API key issued by CBS during onboarding. Sent in the `X-API-Key`
+        header with every request. Combined with an IP allowlist for
+        additional security.
+
+  schemas:
+    MessageEnvelope:
+      type: object
+      required: [message_type, schema_version, payload]
+      description: |
+        Top-level envelope for all messages sent through the CBS DataSec
+        API Gateway. The `message_type` field determines how the `payload`
+        array is interpreted downstream.
+      properties:
+        message_type:
+          type: string
+          enum: [anpr_observation_batch, camera_registration, camera_update]
+          description: |
+            Type of message in this envelope:
+            - `anpr_observation_batch`: batch of ANPR observations
+            - `camera_registration`: register new cameras
+            - `camera_update`: update existing camera metadata
+        schema_version:
+          type: string
+          example: anpr-2.0.0
+          description: |
+            Version of the payload schema. Allows backwards-compatible
+            evolution of the data format.
+        payload:
+          type: array
+          minItems: 1
+          description: |
+            Array of data items. The schema of each item depends on
+            `message_type`. See `AnprObservation` and `Camera` schemas.
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/AnprObservation'
+              - $ref: '#/components/schemas/Camera'
+
+    AnprObservation:
+      type: object
+      required: [observation_id, camera_id, event_time, plate_country, plate_text]
+      description: |
+        A single ANPR observation with flattened fields. The `plate` and
+        `read_quality` objects from v1 are replaced by flat fields
+        `plate_country`, `plate_text`, and `read_confidence`.
+      properties:
+        observation_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this observation.
+        camera_id:
+          type: string
+          format: uuid
+          description: Identifier of the camera that captured this observation.
+        event_time:
+          type: string
+          format: date-time
+          description: UTC ISO 8601 (RFC 3339) timestamp with milliseconds.
+        plate_country:
+          type: string
+          description: ISO 3166-1 alpha-2 country code of the license plate.
+          example: NL
+        plate_text:
+          type: string
+          description: License plate text as captured by the supplier.
+          example: NLG123AB
+        read_confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: OCR confidence score (0.0 - 1.0).
+          example: 0.96
+        detection_direction:
+          type: string
+          enum: [obverse, reverse]
+          nullable: true
+          description: |
+            Direction of the license plate detection:
+            - obverse: vehicle approaching camera (front plate / voorzijde)
+            - reverse: vehicle departing from camera (rear plate / achterzijde)
+        lane:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: |
+            Lane number where the vehicle was detected. Lane 1 is the
+            rightmost lane (NL convention), numbering increases to the left.
+        notes:
+          type: string
+          nullable: true
+        extensions:
+          type: object
+          additionalProperties: true
+          description: Vendor-specific namespaced keys.
+
+    Camera:
+      type: object
+      required: [camera_id, location_lat, location_lon, address_formatted, camera_type]
+      description: |
+        Camera metadata with flattened location and address fields. The
+        nested `location` and `location.address` objects from v1 are replaced
+        by flat `location_*` and `address_*` fields.
+      properties:
+        camera_id:
+          type: string
+          format: uuid
+        supplier_camera_ref:
+          type: string
+          nullable: true
+          description: Supplier's own reference identifier for the camera.
+        location_lat:
+          type: number
+          minimum: -90
+          maximum: 90
+          description: WGS-84 latitude.
+        location_lon:
+          type: number
+          minimum: -180
+          maximum: 180
+          description: WGS-84 longitude.
+        location_crs_additional:
+          type: string
+          enum: ['EPSG:28992']
+          nullable: true
+          description: Optional RD New CRS identifier when dual-coordinates are supplied.
+        address_formatted:
+          type: string
+          description: Human-readable address line.
+          example: 'Catharijnesingel 30, 3511 BK Utrecht, NL'
+        address_street:
+          type: string
+          nullable: true
+        address_house_number:
+          type: string
+          nullable: true
+        address_postal_code:
+          type: string
+          nullable: true
+        address_city:
+          type: string
+          nullable: true
+        address_country:
+          type: string
+          nullable: true
+          description: ISO 3166-1 alpha-2 country code.
+        mount_height_m:
+          type: number
+          minimum: 0
+          nullable: true
+        azimuth_deg:
+          type: number
+          minimum: 0
+          maximum: 360
+          nullable: true
+        tilt_deg:
+          type: number
+          minimum: -90
+          maximum: 90
+          nullable: true
+        fov_deg:
+          type: number
+          minimum: 0
+          maximum: 180
+          nullable: true
+        view_polygon_geojson:
+          type: object
+          nullable: true
+          description: Valid GeoJSON Polygon (WGS-84) describing approximate field-of-view.
+        privacy_masks_geojson:
+          type: object
+          nullable: true
+          description: GeoJSON polygons to exclude from processing.
+        active_from:
+          type: string
+          format: date-time
+          nullable: true
+        active_to:
+          type: string
+          format: date-time
+          nullable: true
+        attributes:
+          type: object
+          additionalProperties: true
+          description: Vendor-specific attributes (e.g., lane_count, one_way).
+        camera_type:
+          type: string
+          enum: [monitoring, enforcement, hybrid]
+          description: Primary purpose of the camera installation.
+        deployment_type:
+          type: string
+          enum: [fixed, mobile_scanauto, portable, temporary]
+          nullable: true
+          description: Physical deployment mode of the camera.
+        traffic_direction:
+          type: string
+          enum: [obverse, reverse, bidirectional]
+          nullable: true
+          description: |
+            Traffic direction capability:
+            - obverse: captures approaching traffic (front plate / voorzijde)
+            - reverse: captures departing traffic (rear plate / achterzijde)
+            - bidirectional: can capture both directions
+        camera_status:
+          type: string
+          enum: [active, inactive]
+          nullable: true
+        camera_status_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        zone_id:
+          type: string
+          nullable: true
+          description: Identifier of the emission zone (ZE-zone) this camera is associated with.
+
+    GatewayReceipt:
+      type: object
+      description: |
+        Standard CBS DataSec API Gateway receipt. Confirms transport-level
+        receipt only; content validation happens asynchronously.
+      properties:
+        status:
+          type: string
+          example: accepted
+        company:
+          type: string
+          description: Afnemer identifier.
+          example: vesdi-anpr
+        requestId:
+          type: string
+          description: Gateway-assigned request identifier.
+        idempotencyKey:
+          type: string
+          description: Echo of the X-Idempotency-Key header if provided.
+        timestamp:
+          type: string
+          format: date-time
+          description: Gateway timestamp of receipt.
+        sizeBytes:
+          type: integer
+          description: Size of the received payload in bytes.
+        filename:
+          type: string
+          description: Echo of the X-Filename header if provided.
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+x-cbs-policies:
+  privacy:
+    - Raw license plates are ephemeral and removed within 24 hours unless a legal basis for QC retention exists.
+    - CBS computes plate_hash_vesdi = SHA-256(plate_value + HSM-held global pepper) outside of this ingestion API.
+  security:
+    - TLS 1.2 or higher is mandatory (per CBS DataSec API Gateway requirements).
+    - Authentication via API key (X-API-Key header) combined with IP allowlist.
+    - No mTLS or OAuth2 at the gateway level (simplified from v1).
+  timing:
+    - Clock skew allowed +/- 2 seconds. NTP/PTP recommended on supplier devices.
+    - Late data accepted up to 7 days; older data requires a backfill job agreement.
+  rateLimits:
+    default:
+      rpm: 600
+      maxPayloadBytes: 52428800
+      note: 600 messages per minute, max 50 MB per upload.
