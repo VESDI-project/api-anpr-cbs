@@ -8,8 +8,11 @@ Bekijk de interactieve ANPR Analysis Dashboard direct in je browser:
 [**Open ANPR Analysis Dashboard**](https://raw.githack.com/VESDI-project/api-anpr-cbs/main/anpr_analysis_dashboard.html)
 
 ## ReDocly
-Om de YAML-API file iets makkelijker te bekijken, upload 'em in de ReDocly interactive viewer, of klik hieronder:
-[**Bekijk API Documentatie in ReDocly**](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VESDI-project/api-anpr-cbs/main/VESDI_ANPR_OpenAPI.yaml)
+Om de YAML-API files iets makkelijker te bekijken, upload 'em in de ReDocly interactive viewer, of klik hieronder:
+
+[**Bekijk v2 API Documentatie in Redocly**](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VESDI-project/api-anpr-cbs/main/VESDI_ANPR_OpenAPI_v2.yaml) (aangepast aan CBS DataSec Gateway)
+
+[**Bekijk v1 API Documentatie in Redocly**](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VESDI-project/api-anpr-cbs/main/VESDI_ANPR_OpenAPI.yaml) (oorspronkelijke versie)
 
 ## Project achtergrond
 Meer achtergrond over het project weten? Scan deze presentatie en fris je geheugen op over het projectplan:
